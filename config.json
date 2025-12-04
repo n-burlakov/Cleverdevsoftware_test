@@ -1,0 +1,28 @@
+{
+    "auth": {
+      "login_url": "https://quotes.toscrape.com/login",
+      "username": "test_user",
+      "password": "test_pass",
+      "retry_attempts": 3,
+      "retry_delay": 2
+    },
+    "scraping": {
+      "base_url": "https://quotes.toscrape.com",
+      "max_pages": null,
+      "retry_attempts": 3,
+      "retry_delay": 2,
+      "timeout": 10,
+      "random_pages": true,
+      "parser_type": "bs4"  
+    },
+    "storage": {
+      "output_file": "outputs/output.json",
+      "author_quotes_file": "outputs/author_quotes.json",
+      "log_file": "logs/script.log"
+    },
+    "logging": {
+      "level": "INFO",
+      "format": "[%(asctime)s] %(levelname)s: %(message)s",
+      "date_format": "%Y-%m-%d %H:%M:%S"
+    }
+  }
