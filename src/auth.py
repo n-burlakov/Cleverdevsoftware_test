@@ -124,15 +124,51 @@ class Authenticator:
     
     def _check_authentication_success(self, html: str, username: str) -> bool:
         """Check if authentication was successful"""
-        indicators = [
-            username.lower() in html.lower(),
-            'logout' in html.lower(),
-            'log out' in html.lower(),
-            'successfully logged in' in html.lower(),
-        ]
-        
-        if '/login' not in html or len(html) > 5000:
-            if 'quote' in html.lower() or 'quotes' in html.lower():
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
+            
+            # check for username in header-box or similar elements
+            header_box = soup.find('div', class_='header-box')
+            if header_box:
+                header_text = header_box.get_text().lower()
+                if username.lower() in header_text:
+                    self.logger.debug(f"Found username '{username}' in header, authentication successful")
+                    return True
+
+            # check for logout link
+            logout_link = soup.find('a', href=lambda x: x and '/logout' in x)
+            if logout_link:
+                self.logger.debug("Found logout link, authentication successful")
+                return True
+            
+            
+            # check for username in any paragraph or span
+            for element in soup.find_all(['p', 'span', 'div']):
+                text = element.get_text().strip()
+                if text and username.lower() in text.lower():
+                    words = text.lower().split()
+                    if username.lower() in words:
+                        self.logger.debug(f"Found username '{username}' in page content, authentication successful")
+                        return True
+            
+            # check if we're not on login page and page has content
+            if '/login' not in html.lower() and len(html) > 5000:
+                if 'quote' in html.lower() or 'quotes' in html.lower():
+                    # check if logout is present
+                    if 'logout' in html.lower():
+                        self.logger.debug("Not on login page with quotes and logout link, authentication likely successful")
+                        return True
+            
+            # check for username anywhere in HTML
+            if username.lower() in html.lower() and 'logout' in html.lower():
+                self.logger.debug(f"Found username '{username}' and logout link in HTML, authentication successful")
+                return True
+                
+        except Exception as e:
+            self.logger.debug(f"Error checking authentication success: {str(e)}")
+            # fallback to simple text search
+            if username.lower() in html.lower() and 'logout' in html.lower():
                 return True
         
-        return any(indicators)
+        self.logger.warning("Authentication check failed: username not found on page")
+        return False
